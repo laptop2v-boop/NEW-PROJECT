@@ -2,6 +2,20 @@
 (function () {
   "use strict";
 
+  /* ---------- Opening position ----------
+     Browsers restore the old scroll position on reload (history.scrollRestoration
+     defaults to "auto"). The homepage should always open at the top, unless the
+     visitor deliberately arrives on an anchor (index.html#something) or uses the
+     Back/Forward buttons, where restoring their place is the expected behaviour. */
+  function openAtTop() {
+    if (document.body.getAttribute("data-page") !== "home") return;
+    if (location.hash.length > 1) return;
+    var nav = (performance.getEntriesByType && performance.getEntriesByType("navigation")[0]) || {};
+    if (nav.type === "back_forward") return;
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
   var S = window.SITE;
   var P = (window.PRODUCTS || []).slice();
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -16,6 +30,15 @@
   var money = function (n) { return S.currency + new Intl.NumberFormat(S.locale).format(n); };
   // "/images/x.jpg" and "images/x.jpg" both work, also when the site is opened as a local file
   var src = function (path) { return String(path).replace(/^\/+/, ""); };
+
+  // A missing photo file: remove the <img> so the labelled placeholder shows, and drop
+  // the "NN photos" tag, which would otherwise promise photos that are not there.
+  window.csImgFail = function (img) {
+    var plate = img.closest(".plate"), tag = plate && plate.querySelector(".count");
+    if (tag) tag.remove();
+    img.remove();
+  };
+  var FAIL = 'onerror="csImgFail(this)"';
 
   /* Numbering and defaults are derived, so the data file stays simple. */
   var NUM_W = Math.max(2, String(P.length).length);
@@ -59,7 +82,7 @@
       '<div class="ph" aria-hidden="true"><span>No. ' + p.no + '</span><span>Photo to come' +
       (n > 1 ? '<br>' + pad(i + 1) + ' / ' + pad(n) : '') + '</span></div>' +
       (file ? '<img src="' + esc(src(file)) + '" alt="' + esc(p.name) + (n > 1 ? " — photo " + (i + 1) + " of " + n : "") +
-        '" loading="lazy" decoding="async" onerror="this.remove()">' : '') +
+        '" loading="lazy" decoding="async" '+FAIL+'>' : '') +
       (badge && n > 1 ? '<span class="count">' + pad(n) + ' photos</span>' : '') +
       '</div>';
   }
@@ -190,7 +213,10 @@
   function home() {
     var feat = P.filter(function (p) { return p.featured; });
     if (!feat.length) feat = P.slice(0, 5);
-    var lead = feat[0], rest = feat.slice(1, 5);
+    var lead = feat[0], rest = feat.slice(1);
+    // The featured grid is 3 columns on desktop and 2 on phones. Show whole rows only
+    // (6, else 3) so there is never a lone card hanging in the last row on desktop.
+    rest = rest.slice(0, rest.length >= 6 ? 6 : rest.length >= 3 ? 3 : rest.length);
 
     var fig = $("#hero-fig");
     if (lead) {
@@ -214,10 +240,11 @@
 
     var sec = $("#shelf-sec");
     if (!rest.length) { sec.hidden = true; return; }
-    $("#shelf").innerHTML = rest.map(function (p, i) {
-      return '<article class="shelf-item s' + (i + 1) + '">' +
+    // One ratio for every featured card, so photographs line up in rows.
+    $("#shelf").innerHTML = rest.map(function (p) {
+      return '<article class="shelf-item">' +
         '<a class="view" href="shop.html#' + esc(p.id) + '" data-view="' + esc(p.id) + '" aria-label="View details: ' + esc(p.name) + '">' +
-          plate(p, ["4 / 5", "1 / 1", "4 / 3", "3 / 4"][i], 0, true) + '</a>' +
+          plate(p, "4 / 5", 0, true) + '</a>' +
         '<div class="shelf-cap"><span class="label">No. ' + p.no + (p.category ? ' · ' + esc(p.category) : '') + '</span>' +
         '<h3><a href="shop.html#' + esc(p.id) + '" data-view="' + esc(p.id) + '">' + esc(p.name) + '</a></h3>' +
         '<p>' + esc(p.description || "") + '</p>' +
@@ -275,9 +302,10 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    openAtTop();
     buildModal();
     var page = document.body.getAttribute("data-page");
-    if (page === "home") home();
+    if (page === "home") { home(); openAtTop(); }
     if (page === "shop") shop();
     if (page === "about") about();
     $$("[data-year]").forEach(function (el) { el.textContent = "© " + new Date().getFullYear() + " " + S.name; });

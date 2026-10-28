@@ -1,6 +1,7 @@
 PRODUCT PHOTOGRAPHS
 -------------------
-Put product photos in  images/products/  and list them in js/data.js:
+Put product photos in  images/products/  (see images/products/README.txt for the exact
+file names) and list them in js/data.js:
 
   images: [
     "images/products/nfc-keyring-1.jpg",

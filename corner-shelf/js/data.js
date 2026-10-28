@@ -43,11 +43,9 @@ window.PRODUCTS = [
     featured: true,
     description: "A portable juicer for fresh juice away from the kitchen.",
     images: [
-      "images/products/portable1.jpg",
-      "images/products/portable2.jpg",
-      "images/products/portable3.jpg",
-      "images/products/portable4.mp4",
-      "images/products/portable5.jpg"
+      "images/products/portable-juicer-1.jpg",
+      "images/products/portable-juicer-2.jpg",
+      "images/products/portable-juicer-3.jpg"
     ],
     tone: "#DCD3C1"
   },
@@ -59,8 +57,8 @@ window.PRODUCTS = [
     featured: true,
     description: "A small panda-shaped lamp for a bedside table or a desk.",
     images: [
-      "images/products/panda1.jpg",
-      "images/products/panda2.jpg",
+      "images/products/panda-lamp-1.jpg",
+      "images/products/panda-lamp-2.jpg",
       "images/products/panda-lamp-3.jpg"
     ],
     tone: "#D3CBBB"
